@@ -1,0 +1,1 @@
+I’m @hembo, working in cultural heritage sector. Looking into helpful tech which help us to preserve our cultural heritage. Not always sure that the thing we call "culture" is always worht saving tho.
