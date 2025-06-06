@@ -36,7 +36,7 @@
                 "type": "SpecificResource",
                 "source": [
                   {
-                    "id": "https://raw.githubusercontent.com/IIIF/3d/main/assets/astronaut/astronaut.glb",
+                    "id": "https://github.com/hembo/hembo/raw/refs/heads/main/ai8912-5.glb",
                     "type": "Model",
                     "format": "model/gltf-binary"
                   }
