@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kriisivaru</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f5d3a">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#222;--mute:#6b6b63;--line:#e2dfd6;--accent:#2f5d3a;--accent-ink:#fff;--warn:#b45309;--bad:#b91c1c;--ok:#2f7d46}
+@media (prefers-color-scheme:dark){:root{--bg:#161815;--card:#1f221e;--ink:#ece9e0;--mute:#9a9a90;--line:#33372f;--accent:#5fa571;--accent-ink:#0e140f;--warn:#e0a050;--bad:#f07a7a;--ok:#6fc189}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif}
+header{padding:14px 16px 0;max-width:760px;margin:auto}
+h1{margin:0;font-size:1.3rem}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;max-width:760px;margin:auto}
+nav button{flex:none}
+main{max-width:760px;margin:auto;padding:0 16px 60px}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary,nav button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.small{padding:3px 8px;font-size:.85rem}
+input,select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.card h2{margin:0 0 8px;font-size:1.05rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+label{font-size:.8rem;color:var(--mute);display:block}
+.meter{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:4px 0 2px}
+.meter i{display:block;height:100%;background:var(--ok)}
+.meter i.low{background:var(--bad)}.meter i.mid{background:var(--warn)}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.mute{color:var(--mute);font-size:.85rem}
+.bad{color:var(--bad)}.warn{color:var(--warn)}.ok{color:var(--ok)}
+.big{font-size:1.8rem;font-weight:700}
+.tags span{background:var(--line);border-radius:10px;padding:1px 8px;font-size:.78rem;margin-right:4px}
+.ing-have{color:var(--ok)}.ing-miss{color:var(--mute);text-decoration:line-through}
+details summary{cursor:pointer}
+</style>
+</head>
+<body>
+<header><h1>🏠 Kriisivaru</h1><div class="mute">Mis mul on, mis on vaja, mida sööme esimesena. Andmed jäävad ainult sinu seadmesse.</div></header>
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<script>
+// ---------- andmed ----------
+const KEY = 'kriisivaru.v1';
+const CATS = ['Vesi','Toit','Ravimid ja esmaabi','Küte ja valgus','Hügieen','Muu'];
+
+// key, nimi, kategooria, ühik, kcal/ühik, säilivus kuudes (kuiv, avamata), vihje
+const PRESETS = [
+ ['vesi','Joogivesi','Vesi','l',0,12,'Pudelivesi: jahedas ja pimedas; vahetage aastas.'],
+ ['riis','Riis','Toit','kg',3600,24,'Valge riis säilib aastaid kuivas; pruun ~6 kuud.'],
+ ['makaron','Makaronid','Toit','kg',3500,24,'Kuiv pasta säilib hästi.'],
+ ['kaer','Kaerahelbed','Toit','kg',3700,12,'Sobib ka külmalt leotatuna (ei vaja kütet).'],
+ ['jahu','Jahu','Toit','kg',3400,12,'Täisteratooted lähevad kiiremini mõranema.'],
+ ['oad','Oad konservis (400 g)','Toit','purk',340,36,'Konservid: "parem enne" on sageli konservatiivne.'],
+ ['tuun','Tuunikala konservis','Toit','purk',200,36,'Hoida alla 25 °C.'],
+ ['liha','Lihakonserv / hautis (350 g)','Toit','purk',700,36,'Paistes või roostes purki ära kasuta.'],
+ ['tomat','Purustatud tomat (400 g)','Toit','purk',100,24,'Pärast avamist 2-3 päeva külmas.'],
+ ['pahklivoi','Pähklivõi (350 g)','Toit','purk',2000,12,'Kõrge energiasisaldus, ei vaja kütet.'],
+ ['pahklid','Pähklid','Toit','kg',6000,9,'Rasv läheb kuumuses mõruks.'],
+ ['puuvili','Kuivatatud puuviljad','Toit','kg',2800,12,''],
+ ['sokolaad','Šokolaad','Toit','kg',5300,12,''],
+ ['naki','Näkileib / kuivikud','Toit','kg',3800,12,'Hoida kuivas.'],
+ ['mesi','Mesi','Toit','kg',3000,120,'Praktiliselt ei rikne. Kristalliseerumine pole viga.'],
+ ['suhkur','Suhkur','Toit','kg',3870,120,''],
+ ['sool','Sool','Toit','kg',0,120,''],
+ ['oli','Taimeõli','Toit','l',8000,18,'Pimedas ja jahedas.'],
+ ['piimapulber','Piimapulber','Toit','kg',5000,12,'Avatud pakend kuivas ja suletuna.'],
+ ['piim','Pikaealine piim (UHT)','Toit','l',650,9,'Avamata toatemperatuuril; avatud 2-3 päeva.'],
+ ['kartul','Kartul','Toit','kg',770,3,'Jahedas ja pimedas; rohelist/idanenut mitte.'],
+ ['sibul','Sibul','Toit','kg',400,3,'Kuivas ja õhustatud kohas.'],
+ ['porgand','Porgand','Toit','kg',410,1,'Jahedas; liivas kauem.'],
+ ['kylm','Külmutatud köögivili','Toit','kg',500,10,'Elektrikatkestusel sööge sügavkülmast tooted esimesena (24-48 h kinni).'],
+ ['tee','Tee / kohv','Toit','pakk',0,24,'Moraalitõstja.'],
+ ['patarei','Patareid (AA/AAA)','Küte ja valgus','pakk',0,60,''],
+ ['kynal','Küünlad / tuletikud','Küte ja valgus','pakk',0,120,''],
+ ['gaas','Gaasiballoon pliidile','Küte ja valgus','tk',0,120,'Kasuta ainult hästi õhutatud ruumis.'],
+ ['esmaabi','Esmaabikomplekt','Ravimid ja esmaabi','tk',0,36,'Kontrolli steriilsete asjade kuupäevi.'],
+ ['ravim','Püsiravimid','Ravimid ja esmaabi','pakk',0,18,'Vähemalt 2 nädala varu, kui võimalik.'],
+ ['valuvaigisti','Valuvaigisti / palavikuravim','Ravimid ja esmaabi','pakk',0,24,''],
+ ['vesipuhastus','Veepuhastustabletid','Vesi','pakk',0,48,''],
+ ['hygieen','Märgpuhastuslapid','Hügieen','pakk',0,36,''],
+ ['prygikott','Prügikotid','Hügieen','pakk',0,120,'Kasulik ka ajutise tualetina.'],
+];
+const byKey = Object.fromEntries(PRESETS.map(p=>[p[0],p]));
+
+// kontrollnimekiri: mis peaks majas olema
+const CHECKLIST = [
+ ['Raadio (patarei/kurbel/auto)','Info kriisi ajal, kui mobiilsidet pole.'],
+ ['Taskulamp + varupatareid',''],
+ ['Powerbank, laetud','Telefoni laadimiseks.'],
+ ['Soojendus- ja toiduvalmistusviis (kämpingupliit + gaas)','Ainult õhutatud ruumis.'],
+ ['Sularaha väikestes rahatähtedes','Kaardimaksed võivad katkeda.'],
+ ['Dokumentide koopiad (paberil ja USB-l)',''],
+ ['Soe riietus ja magamiskott/tekid',''],
+ ['Lemmiklooma toit ja vesi','Kui on lemmikloom.'],
+ ['Beebi- või erivajaduse toit','Kui on vajadus.'],
+ ['Tulekustuti ja suitsuandur','Kontrolli patarei.'],
+ ['Kontaktid ja kokkusaamiskoht kokku lepitud','Paberil, mitte ainult telefonis.'],
+ ['Üldkasutatavad töövahendid (kõrvits, konserviavaja, multitool)','Konserviavaja on kergesti unustatav!'],
+];
+
+const RECIPES = [
+ {n:'Riisi-ube pott',need:['riis','oad'],opt:['sibul','sool','tomat','oli'],fuel:true,
+  s:'Keeda riisi (1:2 veega) 15 min. Lisa kurnatud oad, soola ja soovi korral tomatit/sibulat. Soojenda läbi.'},
+ {n:'Kaerapuder',need:['kaer'],opt:['piimapulber','mesi','suhkur','puuvili','pahklivoi'],fuel:true,
+  s:'1 osa helbeid : 2 osa vett või lahjat piimapulbrit, keeda 5 min. Magusta meega, lisa puuvilju.'},
+ {n:'Külm leotatud kaer (kütteta)',need:['kaer'],opt:['piimapulber','puuvili','pahklivoi','mesi','pahklid'],fuel:false,
+  s:'Leota helbeid ~2 h võrdses koguses vees või piimapulbri lahuses. Lisa pähklivõi/puuvili/mesi.'},
+ {n:'Tuuni-pasta',need:['makaron','tuun'],opt:['tomat','sibul','oli','sool'],fuel:true,
+  s:'Keeda pasta soolases vees (vett saab kasutada kordusena), sega kurnatud tuun ja tomat. Nii kulub vähe vett.'},
+ {n:'Pannileib',need:['jahu'],opt:['oli','sool','piimapulber'],fuel:true,
+  s:'Jahu + vesi + näpuotsatäis soola, sõtku taigen, vormi lamedad kakud ja küpseta kuival pannil mõlemalt poolt.'},
+ {n:'Vee-jahu pannkoogid',need:['jahu'],opt:['piimapulber','oli','suhkur','mesi'],fuel:true,
+  s:'Jahu + vesi/piimapulbri lahus + natuke õli. Prae kuival või õlitatud pannil. Pealt mesi/suhkur.'},
+ {n:'Liha-kartuli hautis',need:['liha','kartul'],opt:['sibul','porgand','sool'],fuel:true,
+  s:'Kuubikuta kartul, sibul ja porgand, keeda pehmeks. Lisa lihakonserv lõpus ja soojenda läbi.'},
+ {n:'Kartuli-sibula supp',need:['kartul','sibul'],opt:['porgand','oli','sool','piimapulber'],fuel:true,
+  s:'Prae sibul õlis, lisa kuubikuteks kartul ja vesi, keeda pehmeks. Soovi korral püreesta ja lisa piimapulbrit.'},
+ {n:'Riisipuding',need:['riis','piimapulber'],opt:['suhkur','mesi','puuvili'],fuel:true,
+  s:'Riis veega pehmeks, lisa lahustatud piimapulber ja magustaja, keeda kuni paks.'},
+ {n:'Näkileib pähklivõi ja meega (kütteta)',need:['naki','pahklivoi'],opt:['mesi','puuvili'],fuel:false,
+  s:'Määri pähklivõi näkile, lisa mesi või kuivatatud puuviljad. Kiire ja kütteta.'},
+ {n:'Ubade-tomati hautis',need:['oad','tomat'],opt:['sibul','makaron','riis','oli','sool'],fuel:true,
+  s:'Soojenda oad tomatiga, lisa praetud sibul. Serveeri riisi, pasta või näkileivaga.'},
+ {n:'Energiapallid (kütteta)',need:['pahklivoi','puuvili'],opt:['kaer','mesi','sokolaad','pahklid'],fuel:false,
+  s:'Sega pähklivõi, hakitud kuivatatud puuviljad, kaerahelbed ja mesi; vormi pallid.'},
+];
+
+const TIPS = [
+ 'Sulatatud ja uuesti külmutatud toit: kui toit on püsinud alla 4 °C, on see üldiselt ohutu. Kui on olnud üle 4 °C üle 2 h, viska riknev toit ära.',
+ 'Suletud külmkapp hoiab külma ~4 h, täis sügavkülmik ~48 h (pooltäis ~24 h). Ära ava asjata.',
+ 'Järjekord elektrikatkestusel: 1) külmkapi riknev, 2) sügavkülmik, 3) pikasäilivad varud.',
+ '"Parem enne" on kvaliteedi, mitte ohutuse tähtaeg. "Kõlblik kuni" on ohutuse tähtaeg (liha, kala, piimatooted) – seda ületada ei tohi.',
+ 'Konserv: paistes, lekkiv või tugevalt mõlkis purk minema; tavaline kuupäev ületatud purk on sageli kaua söödav.',
+ 'Vett arvesta 3 l inimese kohta päevas (joomine + toidu valmistamine). Täitke vann/ämbrid vahetult kriisi alguses.',
+ 'Hoia toidu vahekorda: eelista seda, mida sa ka igapäevaselt sööd, ja roteeri varu (vana ette, uus taha).',
+];
+
+let state = load() || {settings:{people:2,days:7,kcalPerDay:2000,waterPerDay:3},items:[],checks:{}};
+let tab = 'ylevaade';
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2,9);
+
+// ---------- arvutused ----------
+function today(){const d=new Date();d.setHours(0,0,0,0);return d}
+function daysTo(iso){if(!iso)return null;return Math.round((new Date(iso+'T00:00:00')-today())/86400000)}
+function addMonths(m){const d=today();d.setMonth(d.getMonth()+m);return d.toISOString().slice(0,10)}
+function totals(){
+  let water=0,kcal=0;
+  for(const it of state.items){
+    if(daysTo(it.expiry)!==null && daysTo(it.expiry)<0) continue; // aegunut ei arvesta
+    if(it.cat==='Vesi' && it.unit==='l' && it.key!=='vesipuhastus') water+=+it.qty||0;
+    if(it.cat==='Toit') kcal+=(+it.qty||0)*(+it.kcal||0);
+  }
+  const s=state.settings;
+  return {water,kcal,
+    waterDays:water/(s.people*s.waterPerDay),
+    foodDays:kcal/(s.people*s.kcalPerDay)};
+}
+function fmt(n){return (Math.round(n*10)/10).toLocaleString('et')}
+function matchKey(name){
+  const n=name.trim().toLowerCase();
+  const p=PRESETS.find(p=>p[1].toLowerCase()===n) || PRESETS.find(p=>n && (p[1].toLowerCase().includes(n)||n.includes(p[1].toLowerCase().split(' ')[0])));
+  return p?p[0]:'';
+}
+function haveKeys(){
+  const set=new Set();
+  for(const it of state.items){
+    const d=daysTo(it.expiry);
+    if((+it.qty||0)>0 && (d===null||d>=0) && it.key) set.add(it.key);
+  }
+  return set;
+}
+
+// ---------- vaated ----------
+const TABS=[['ylevaade','Ülevaade'],['varud','Varud'],['vaja','Mis vaja'],['retseptid','Retseptid'],['sailivus','Säilivus'],['seaded','Seaded']];
+function render(){
+  $('#nav').innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
+  $('#nav').onclick=e=>{const t=e.target.dataset.t;if(t){tab=t;render()}};
+  ({ylevaade:viewOverview,varud:viewItems,vaja:viewNeeds,retseptid:viewRecipes,sailivus:viewShelf,seaded:viewSettings})[tab]();
+}
+
+function meter(days,target){
+  const pct=Math.min(100,Math.round(days/target*100));
+  const cls=pct<50?'low':pct<100?'mid':'';
+  return `<div class="meter"><i class="${cls}" style="width:${pct}%"></i></div>`;
+}
+
+function viewOverview(){
+  const s=state.settings,t=totals();
+  const shortWater=Math.max(0,s.days*s.people*s.waterPerDay-t.water);
+  const shortKcal=Math.max(0,s.days*s.people*s.kcalPerDay-t.kcal);
+  const eatFirst=state.items.filter(i=>i.cat==='Toit'&&i.expiry&&daysTo(i.expiry)!==null).sort((a,b)=>daysTo(a.expiry)-daysTo(b.expiry)).slice(0,6);
+  const checked=CHECKLIST.filter((_,i)=>state.checks[i]).length;
+  $('#main').innerHTML=`
+  <div class="card"><h2>Eesmärk: ${s.people} inimest · ${s.days} päeva</h2>
+   <div class="grid">
+    <div><div class="mute">💧 Vesi</div><div class="big">${fmt(t.waterDays)} p</div>${meter(t.waterDays,s.days)}
+      <div class="mute ${shortWater?'bad':'ok'}">${shortWater?`puudu ${fmt(shortWater)} l`:'piisav'}</div></div>
+    <div><div class="mute">🍽️ Toit</div><div class="big">${fmt(t.foodDays)} p</div>${meter(t.foodDays,s.days)}
+      <div class="mute ${shortKcal?'bad':'ok'}">${shortKcal?`puudu ~${Math.round(shortKcal).toLocaleString('et')} kcal`:'piisav'}</div></div>
+    <div><div class="mute">✅ Kontrollnimekiri</div><div class="big">${checked}/${CHECKLIST.length}</div>${meter(checked,CHECKLIST.length)}</div>
+   </div></div>
+  <div class="card"><h2>Söö esimesena</h2>
+   ${eatFirst.length?eatFirst.map(i=>{const d=daysTo(i.expiry);
+     return `<div class="row"><span>${esc(i.name)} <span class="mute">${fmt(i.qty)} ${esc(i.unit)}</span></span>
+     <span class="${d<0?'bad':d<30?'warn':'mute'}">${d<0?`aegunud ${-d} p`:`${d} p`}</span></div>`}).join('')
+     :'<div class="mute">Lisa varudele aegumiskuupäevad.</div>'}</div>
+  <div class="card"><h2>Mõtteid</h2><div class="mute">Vee ja toidu arvutus ignoreerib aegunud tooteid. Kalorid on hinnangulised (vt <b>Varud</b>).</div></div>`;
+}
+
+function viewItems(){
+  const f=state.editing||{};
+  const rows=CATS.map(c=>{
+    const its=state.items.filter(i=>i.cat===c);
+    if(!its.length)return '';
+    return `<div class="card"><h2>${c}</h2>${its.map(i=>{
+      const d=daysTo(i.expiry);
+      return `<div class="row"><span>${esc(i.name)}<br><span class="mute">${fmt(i.qty)} ${esc(i.unit)}${i.loc?' · '+esc(i.loc):''}</span></span>
+      <span style="text-align:right"><span class="${d===null?'mute':d<0?'bad':d<30?'warn':'mute'}">${d===null?'–':d<0?`aegunud ${-d} p`:`${i.expiry}`}</span><br>
+      <button class="small" data-edit="${i.id}">muuda</button> <button class="small" data-del="${i.id}">×</button></span></div>`}).join('')}</div>`}).join('');
+  $('#main').innerHTML=`
+  <div class="card"><h2>${f.id?'Muuda':'Lisa'} toode</h2>
+   <datalist id="dl">${PRESETS.map(p=>`<option value="${esc(p[1])}">`).join('')}</datalist>
+   <div class="grid">
+    <div><label>Nimi</label><input id="f_name" list="dl" value="${esc(f.name||'')}"></div>
+    <div><label>Kategooria</label><select id="f_cat">${CATS.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div><label>Kogus</label><input id="f_qty" type="number" step="any" min="0" value="${f.qty??''}"></div>
+    <div><label>Ühik</label><input id="f_unit" value="${esc(f.unit||'')}"></div>
+    <div><label>Aegub</label><input id="f_exp" type="date" value="${f.expiry||''}"></div>
+    <div><label>kcal / ühik (toit)</label><input id="f_kcal" type="number" step="any" min="0" value="${f.kcal??''}"></div>
+    <div><label>Asukoht</label><input id="f_loc" value="${esc(f.loc||'')}"></div>
+   </div>
+   <div class="mute" id="f_hint" style="margin-top:6px"></div>
+   <div style="margin-top:8px"><button class="primary" id="f_save">${f.id?'Salvesta':'Lisa'}</button> ${f.id?'<button id="f_cancel">Tühista</button>':''}</div></div>
+  ${rows||'<div class="mute">Varusid veel pole.</div>'}`;
+  $('#f_name').oninput=()=>{
+    const k=matchKey($('#f_name').value),p=byKey[k];
+    if(!p||f.id)return;
+    $('#f_cat').value=p[2];$('#f_unit').value=p[3];$('#f_kcal').value=p[4];
+    if(!$('#f_exp').value)$('#f_exp').value=addMonths(p[5]);
+    $('#f_hint').textContent=`Tüüpiline säilivus ~${p[5]} kuud. ${p[6]}`;
+  };
+  $('#f_save').onclick=()=>{
+    const name=$('#f_name').value.trim();if(!name)return;
+    const it={id:f.id||uid(),name,key:matchKey(name),cat:$('#f_cat').value,qty:+$('#f_qty').value||0,
+      unit:$('#f_unit').value.trim(),expiry:$('#f_exp').value,kcal:+$('#f_kcal').value||0,loc:$('#f_loc').value.trim()};
+    const idx=state.items.findIndex(x=>x.id===it.id);
+    if(idx>=0)state.items[idx]=it;else state.items.push(it);
+    state.editing=null;save();render();
+  };
+  if($('#f_cancel'))$('#f_cancel').onclick=()=>{state.editing=null;render()};
+  $('#main').onclick=e=>{
+    if(e.target.dataset.del){state.items=state.items.filter(i=>i.id!==e.target.dataset.del);save();render()}
+    if(e.target.dataset.edit){state.editing=state.items.find(i=>i.id===e.target.dataset.edit);render();window.scrollTo(0,0)}
+  };
+}
+
+function viewNeeds(){
+  const s=state.settings,t=totals();
+  const need=[
+    ['💧 Vesi',`${s.days*s.people*s.waterPerDay} l`,`${fmt(t.water)} l`,t.water>=s.days*s.people*s.waterPerDay],
+    ['🍽️ Toit',`${(s.days*s.people*s.kcalPerDay).toLocaleString('et')} kcal`,`${Math.round(t.kcal).toLocaleString('et')} kcal`,t.foodDays>=s.days],
+  ];
+  $('#main').innerHTML=`
+  <div class="card"><h2>Kogused</h2>${need.map(n=>`<div class="row"><span>${n[0]}</span><span>${n[2]} / ${n[1]} <span class="${n[3]?'ok':'bad'}">${n[3]?'✓':'puudu'}</span></span></div>`).join('')}</div>
+  <div class="card"><h2>Kontrollnimekiri</h2>
+   ${CHECKLIST.map((c,i)=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);color:var(--ink);font-size:1rem">
+     <input type="checkbox" style="width:auto;margin-top:5px" data-chk="${i}" ${state.checks[i]?'checked':''}>
+     <span>${esc(c[0])}${c[1]?`<br><span class="mute">${esc(c[1])}</span>`:''}</span></label>`).join('')}</div>`;
+  $('#main').onchange=e=>{if(e.target.dataset.chk!==undefined){state.checks[e.target.dataset.chk]=e.target.checked;save()}};
+}
+
+function viewRecipes(){
+  const have=haveKeys();
+  const scored=RECIPES.map(r=>{
+    const miss=r.need.filter(k=>!have.has(k));
+    return {r,miss,opt:r.opt.filter(k=>have.has(k))};
+  }).sort((a,b)=>a.miss.length-b.miss.length||b.opt.length-a.opt.length);
+  const ready=scored.filter(x=>!x.miss.length).length;
+  $('#main').innerHTML=`<div class="card"><div class="mute">Retseptid on koostatud sinu varude (mitte aegunud) järgi. Valmis: <b>${ready}</b> / ${RECIPES.length}. Lisa varusid, et rohkem avaneks.</div></div>`+
+  scored.map(({r,miss})=>`<details class="card" ${!miss.length?'open':''}><summary><b>${esc(r.n)}</b>
+    <span class="tags"><span>${r.fuel?'🔥 vajab kütet':'❄️ kütteta'}</span>${miss.length?`<span class="bad">puudu: ${miss.map(k=>esc(byKey[k][1])).join(', ')}</span>`:'<span class="ok">valmis</span>'}</span></summary>
+    <div style="margin-top:8px">${r.need.concat(r.opt).map(k=>`<span class="${have.has(k)?'ing-have':'ing-miss'}">${esc(byKey[k][1])}</span>${r.need.includes(k)?'':' <span class="mute">(valikuline)</span>'}`).join(' · ')}</div>
+    <p>${esc(r.s)}</p></details>`).join('');
+}
+
+function viewShelf(){
+  $('#main').innerHTML=`
+  <div class="card"><h2>Reeglid</h2>${TIPS.map(t=>`<p style="margin:6px 0">• ${esc(t)}</p>`).join('')}</div>
+  <div class="card"><h2>Tüüpiline säilivus (avamata, õigesti hoitud)</h2>
+   ${PRESETS.filter(p=>p[2]==='Toit'||p[2]==='Vesi').map(p=>`<div class="row"><span>${esc(p[1])}<br><span class="mute">${esc(p[6])}</span></span><span class="mute">${p[5]>=120?'10+ a':p[5]>=12?`${Math.round(p[5]/12*10)/10} a`:`${p[5]} k`}</span></div>`).join('')}
+   <p class="mute">Väärtused on suunavad hinnangud. Lähtu alati pakendi märgistusest ja oma meeltest.</p></div>`;
+}
+
+function viewSettings(){
+  const s=state.settings;
+  $('#main').innerHTML=`
+  <div class="card"><h2>Leibkond</h2><div class="grid">
+   <div><label>Inimesi</label><input id="s_people" type="number" min="1" value="${s.people}"></div>
+   <div><label>Päevi (eesmärk)</label><input id="s_days" type="number" min="1" value="${s.days}"></div>
+   <div><label>kcal / inimene / päev</label><input id="s_kcal" type="number" value="${s.kcalPerDay}"></div>
+   <div><label>vett l / inimene / päev</label><input id="s_water" type="number" step="0.5" value="${s.waterPerDay}"></div>
+  </div></div>
+  <div class="card"><h2>Varukoopia</h2>
+   <button id="s_exp">⬇️ Ekspordi JSON</button>
+   <button id="s_impbtn">⬆️ Impordi JSON</button>
+   <input type="file" id="s_imp" accept=".json,application/json" hidden>
+   <div id="s_msg" class="mute" style="margin-top:8px"></div>
+   <p class="mute">Andmed on salvestatud vaid selle brauseri kohalikku mällu. Tee aeg-ajalt eksport.</p></div>`;
+  const upd=()=>{state.settings={people:Math.max(1,+$('#s_people').value||1),days:Math.max(1,+$('#s_days').value||1),
+    kcalPerDay:+$('#s_kcal').value||2000,waterPerDay:+$('#s_water').value||3};save()};
+  ['s_people','s_days','s_kcal','s_water'].forEach(id=>$('#'+id).onchange=upd);
+  $('#s_exp').onclick=()=>{const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,1)],{type:'application/json'}));
+    a.download='kriisivaru.json';a.click()};
+  $('#s_impbtn').onclick=()=>$('#s_imp').click();
+  $('#s_imp').onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(r.result);
+        if(!Array.isArray(d.items)||!d.settings)throw 0;
+        const replace=!state.items.length||confirm(`Fail sisaldab ${d.items.length} toodet.\nOK = asenda praegused andmed\nTühista = lisa olemasolevatele`);
+        if(replace){state={settings:d.settings,items:d.items,checks:d.checks||{}}}
+        else{const ids=new Set(state.items.map(i=>i.id));d.items.forEach(i=>{if(!ids.has(i.id))state.items.push(i)})}
+        save();render();tab='seaded';render();
+        $('#s_msg').textContent=`Imporditud: ${d.items.length} toodet.`;
+      }catch(_){$('#s_msg').textContent='Vigane fail: ootan kriisivaru.json eksporti.'}
+    };
+    r.readAsText(file);e.target.value='';
+  };
+}
+
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
