@@ -222,6 +222,15 @@ function render(){
   $('#nav').innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
   $('#nav').onclick=e=>{const t=e.target.dataset.t;if(t){tab=t;render()}};
   ({ylevaade:viewOverview,varud:viewItems,vaja:viewNeeds,retseptid:viewRecipes,sailivus:viewShelf,seaded:viewSettings})[tab]();
+  // salasanahaldurid (Proton Pass, 1Password, LastPass, Bitwarden) ei tohi vorme täita
+  document.querySelectorAll('#main input,#main select').forEach(el=>{
+    el.setAttribute('autocomplete','off');
+    el.setAttribute('data-protonpass-ignore','true');
+    el.setAttribute('data-1p-ignore','true');
+    el.setAttribute('data-lpignore','true');
+    el.setAttribute('data-bwignore','true');
+    el.setAttribute('data-form-type','other');
+  });
 }
 
 function meter(days,target){
