@@ -104,6 +104,41 @@ const PRESETS = [
  ['mahkmed','Mähkmed','Beebi','pakk',0,120,'Kasuta ~8 tk päevas.'],
  ['beebilapid','Niisked salvrätikud (beebile)','Beebi','pakk',0,24,''],
 ];
+// ostunimekiri: PDF "Toiduvaru 12 kuud" (hinnad 25.10.2026, 3-liikmelisele perele), vegan-kohandatud
+const SHOP_SECS=['Kuivained (Loona Talu Veski)','Pasta, riis, maiustused','Konservid ja rasvad','Pakendid (hapnikuvaba)','Muu'];
+const SHOP_SEED=[
+ ['Kuivained (Loona Talu Veski)','Nisutera',120,'kg',0.80,'leib, puder, mann','nisu'],
+ ['Kuivained (Loona Talu Veski)','Rukkitera',60,'kg',0.80,'rukkileib','rukis'],
+ ['Kuivained (Loona Talu Veski)','Kaerakruup',30,'kg',2.25,'puder; "kaer tera" on koorega!','kaer'],
+ ['Kuivained (Loona Talu Veski)','Odrakruup',30,'kg',1.40,'supp, puder',''],
+ ['Kuivained (Loona Talu Veski)','Tatrakruup',30,'kg',3.65,'tatrapuder; kruup on röstitud, külviks ei sobi','tatar'],
+ ['Kuivained (Loona Talu Veski)','Hernes',60,'kg',1.70,'hernesupp',''],
+ ['Kuivained (Loona Talu Veski)','Rukkijahu püül',20,'kg',1.35,'valmis jahu, roteeri','jahu'],
+ ['Kuivained (Loona Talu Veski)','Nisujahu püül',20,'kg',1.30,'valmis jahu, roteeri','jahu'],
+ ['Kuivained (Loona Talu Veski)','Hernejahu',10,'kg',2.30,'kiire supp, säästab kütust',''],
+ ['Kuivained (Loona Talu Veski)','Rukkilinnasejahu, tume',3,'kg',2.65,'leiva maitse ja värv',''],
+ ['Kuivained (Loona Talu Veski)','Vahtra- või agaavisiirup (mee asemel)',12,'kg',0,'VEGAN asendus PDF-i meele; lisa hind','siirup'],
+ ['Kuivained (Loona Talu Veski)','Oliiviõli (Kreeka)',10,'l',19.00,'säilib 1,5-2 a (95 € / 5 l)','oli'],
+ ['Kuivained (Loona Talu Veski)','Kanepiseemned',5,'kg',7.50,'rasv + valk, ~1 a',''],
+ ['Pasta, riis, maiustused','Pasta (suured pakid)',40,'kg',1.80,'hinnang; lapsed harjunud','makaron'],
+ ['Pasta, riis, maiustused','Riis (suured pakid)',40,'kg',2.00,'hinnang','riis'],
+ ['Pasta, riis, maiustused','Küpsised, šokolaad (vegan)',1,'eelarve',100.00,'moraal; vaata parim-enne ja koostist',''],
+ ['Konservid ja rasvad','Kikerherned, läätsed, oad konservis (kala/liha asemel)',300,'purki',1.20,'VEGAN asendus; hinnang, kontrolli poes','kiker'],
+ ['Konservid ja rasvad','Tomatikonservid',60,'purki',1.00,'supid, kastmed','tomat'],
+ ['Konservid ja rasvad','Köögiviljad, oad, mais',100,'purki',1.00,'','oad'],
+ ['Konservid ja rasvad','Puuviljakonservid',50,'purki',1.50,'',''],
+ ['Konservid ja rasvad','Rapsiõli, 5 l kanister',15,'l',3.50,'säilib ~1 a; pimedas (3 kanistrit)','oli'],
+ ['Konservid ja rasvad','Kookosõli (ghee asemel)',5,'kg',10.00,'hinnang; säilib kauem',''],
+ ['Pakendid (hapnikuvaba)','Mylar-kott 30 l (50×80 cm)',16,'tk',3.64,'nisu, rukis → ämbrisse (mylar.se, 40 SEK)',''],
+ ['Pakendid (hapnikuvaba)','Mylar-kott 6 l',54,'tk',1.91,'kruubid, herned, jahud (21 SEK)',''],
+ ['Pakendid (hapnikuvaba)','Hapnikuneelaja 300 cc, 100 tk pakk',3,'pakki',15.36,'30 l kott 7 tk, 6 l kott 2-3 tk (169 SEK)',''],
+ ['Pakendid (hapnikuvaba)','Plastämber 20 l (UA20V/320)',42,'tk',5.84,'31 kuivainetele + 9 pasta/riis + 2 maiustused (pakendikeskus.ee)',''],
+ ['Pakendid (hapnikuvaba)','Kaaned tihendiga',42,'tk',0,'küsi hinda; sama tootekood!',''],
+ ['Muu','Leivajuuretis (Nordwise)',3,'pakki',5.00,'1 pakk käivitab, ülejäänud varuks',''],
+ ['Muu','Sool, pärm, sooda',1,'komplekt',30.00,'hinnang; sool ka hapukapsaks',''],
+ ['Muu','D-, C-vitamiin, multivitamiin (vegan D3)',1,'aastaks',60.00,'hinnang',''],
+ ['Muu','Vitamiin B12',1,'aastaks',0,'VEGANI jaoks lisatud; lisa hind',''],
+].map(([sec,name,qty,unit,price,note,key])=>({sec,name,qty,unit,price,note,key}));
 const byKey = Object.fromEntries(PRESETS.map(p=>[p[0],p]));
 
 // kontrollnimekiri: mis peaks majas olema
@@ -185,10 +220,11 @@ state.settings = {...DEFAULTS,...state.settings};
 let tab = 'ylevaade';
 
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({...state,editing:undefined,shopEditing:undefined}))}catch(e){}}
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2,9);
+if(!Array.isArray(state.shop))state.shop=SHOP_SEED.map(x=>({...x,id:uid(),done:false}));
 
 // ---------- arvutused ----------
 function today(){const d=new Date();d.setHours(0,0,0,0);return d}
@@ -223,11 +259,11 @@ function haveKeys(){
 }
 
 // ---------- vaated ----------
-const TABS=[['ylevaade','Ülevaade'],['varud','Varud'],['vaja','Mis vaja'],['retseptid','Retseptid'],['sailivus','Säilivus'],['seaded','Seaded']];
+const TABS=[['ylevaade','Ülevaade'],['varud','Varud'],['ostud','Ostud'],['vaja','Mis vaja'],['retseptid','Retseptid'],['sailivus','Säilivus'],['seaded','Seaded']];
 function render(){
   $('#nav').innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
   $('#nav').onclick=e=>{const t=e.target.dataset.t;if(t){tab=t;render()}};
-  ({ylevaade:viewOverview,varud:viewItems,vaja:viewNeeds,retseptid:viewRecipes,sailivus:viewShelf,seaded:viewSettings})[tab]();
+  ({ylevaade:viewOverview,varud:viewItems,ostud:viewShop,vaja:viewNeeds,retseptid:viewRecipes,sailivus:viewShelf,seaded:viewSettings})[tab]();
   // salasanahaldurid (Proton Pass, 1Password, LastPass, Bitwarden) ei tohi vorme täita
   document.querySelectorAll('#main input,#main select').forEach(el=>{
     el.setAttribute('autocomplete','off');
@@ -370,6 +406,80 @@ function viewNeeds(){
   $('#main').onchange=e=>{if(e.target.dataset.chk!==undefined){state.checks[e.target.dataset.chk]=e.target.checked;save()}};
 }
 
+function viewShop(){
+  const f=state.shopEditing||{};
+  const eur=n=>n.toLocaleString('et',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const tot=x=>(+x.qty||0)*(+x.price||0);
+  const sum=a=>a.reduce((t,x)=>t+tot(x),0);
+  const list=state.shop;
+  const all=sum(list),bought=sum(list.filter(x=>x.done));
+  const secs=[...new Set([...SHOP_SECS,...list.map(x=>x.sec)])];
+  $('#main').innerHTML=`
+  <div class="card"><h2>Ostunimekiri</h2>
+   <div class="grid">
+    <div><div class="mute">Kokku</div><div class="big">${eur(all)}</div></div>
+    <div><div class="mute">Ostetud</div><div class="big ok">${eur(bought)}</div></div>
+    <div><div class="mute">Veel osta</div><div class="big">${eur(all-bought)}</div></div>
+   </div>${meter(bought,all||1)}
+   <div style="margin-top:8px"><button id="sh_copy">📋 Kopeeri ostmata read</button> <span class="mute" id="sh_msg"></span></div>
+  </div>
+  <div class="card"><h2>${f.id?'Muuda':'Lisa'} rida</h2>
+   <datalist id="sh_dl">${secs.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+   <div class="grid">
+    <div><label>Jaotis</label><input id="sh_sec" list="sh_dl" value="${esc(f.sec||'')}"></div>
+    <div><label>Toode</label><input id="sh_name" value="${esc(f.name||'')}"></div>
+    <div><label>Kogus</label><input id="sh_qty" type="number" step="any" min="0" value="${f.qty??''}"></div>
+    <div><label>Ühik</label><input id="sh_unit" value="${esc(f.unit||'')}"></div>
+    <div><label>Hind € / ühik</label><input id="sh_price" type="number" step="any" min="0" value="${f.price??''}"></div>
+    <div><label>Märkus</label><input id="sh_note" value="${esc(f.note||'')}"></div>
+   </div>
+   <div style="margin-top:8px"><button class="primary" id="sh_save">${f.id?'Salvesta':'Lisa'}</button> ${f.id?'<button id="sh_cancel">Tühista</button>':''}</div></div>
+  ${secs.map(sec=>{
+    const its=list.filter(x=>x.sec===sec);if(!its.length)return '';
+    return `<div class="card"><h2>${esc(sec)} <span class="mute">${eur(sum(its))}</span></h2>${its.map(x=>`
+     <div class="row" style="align-items:flex-start">
+      <label style="display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:1rem;flex:1">
+       <input type="checkbox" style="width:auto;margin-top:5px" data-sdone="${x.id}" ${x.done?'checked':''}>
+       <span style="${x.done?'text-decoration:line-through;opacity:.6':''}">${esc(x.name)}<br>
+        <span class="mute">${fmt(x.qty)} ${esc(x.unit)}${x.price?` × ${eur(+x.price)} = ${eur(tot(x))}`:' · hind puudub'}${x.note?' · '+esc(x.note):''}</span></span>
+      </label>
+      <span style="text-align:right;flex:none">
+       ${x.done&&!x.moved?`<button class="small" data-smove="${x.id}">→ varudesse</button><br>`:''}${x.moved?'<span class="mute ok">varudes ✓</span><br>':''}
+       <button class="small" data-sedit="${x.id}">muuda</button> <button class="small" data-sdel="${x.id}">×</button></span></div>`).join('')}</div>`}).join('')}
+  <div class="card mute">Algallikas: PDF "Toiduvaru 12 kuud" (hinnad seisuga 25.10.2026, arvestatud 3-liikmelisele perele). Vegan-asendused on märgitud, hinnad on hinnangulised. Muuda koguseid oma pere järgi.</div>`;
+  const saveRow=()=>{
+    const name=$('#sh_name').value.trim();if(!name)return;
+    const x={...(f.id?f:{id:uid(),done:false}),sec:$('#sh_sec').value.trim()||'Muu',name,qty:+$('#sh_qty').value||0,
+      unit:$('#sh_unit').value.trim(),price:+$('#sh_price').value||0,note:$('#sh_note').value.trim()};
+    if(!x.key)x.key=matchKey(name);
+    const i=state.shop.findIndex(y=>y.id===x.id);
+    if(i>=0)state.shop[i]=x;else state.shop.push(x);
+    state.shopEditing=null;save();render();
+  };
+  $('#sh_save').onclick=saveRow;
+  if($('#sh_cancel'))$('#sh_cancel').onclick=()=>{state.shopEditing=null;render()};
+  $('#sh_copy').onclick=()=>{
+    const txt=list.filter(x=>!x.done).map(x=>`- ${x.name} ${fmt(x.qty)} ${x.unit}`).join('\n');
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(
+      ()=>{$('#sh_msg').textContent='Kopeeritud.'},()=>{$('#sh_msg').textContent='Kopeerimine ei õnnestunud.'});
+  };
+  $('#main').onchange=e=>{
+    const id=e.target.dataset.sdone;if(!id)return;
+    state.shop.find(x=>x.id===id).done=e.target.checked;save();render();
+  };
+  $('#main').onclick=e=>{
+    const d=e.target.dataset;
+    if(d.sdel){state.shop=state.shop.filter(x=>x.id!==d.sdel);save();render()}
+    if(d.sedit){state.shopEditing=state.shop.find(x=>x.id===d.sedit);render();window.scrollTo(0,0)}
+    if(d.smove){
+      const x=state.shop.find(y=>y.id===d.smove),key=x.key||matchKey(x.name),p=byKey[key];
+      state.items.push({id:uid(),name:x.name,key,cat:p?p[2]:/^(Pakendid|Muu)/.test(x.sec)?'Muu':'Toit',qty:+x.qty||0,unit:x.unit,
+        expiry:p?addMonths(p[5]):'',kcal:p?p[4]:0,loc:'',reserve:0});
+      x.moved=true;save();render();
+    }
+  };
+}
+
 function viewRecipes(){
   const have=haveKeys();
   const scored=RECIPES.map(r=>{
@@ -428,7 +538,7 @@ function viewSettings(){
         const d=JSON.parse(r.result);
         if(!Array.isArray(d.items)||!d.settings)throw 0;
         const replace=!state.items.length||confirm(`Fail sisaldab ${d.items.length} toodet.\nOK = asenda praegused andmed\nTühista = lisa olemasolevatele`);
-        if(replace){state={settings:{...DEFAULTS,...d.settings},items:d.items,checks:d.checks||{}}}
+        if(replace){state={settings:{...DEFAULTS,...d.settings},items:d.items,checks:d.checks||{},shop:Array.isArray(d.shop)?d.shop:state.shop}}
         else{const ids=new Set(state.items.map(i=>i.id));d.items.forEach(i=>{if(!ids.has(i.id))state.items.push(i)})}
         save();render();tab='seaded';render();
         $('#s_msg').textContent=`Imporditud: ${d.items.length} toodet.`;
