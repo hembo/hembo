@@ -46,7 +46,7 @@ details summary{cursor:pointer}
 <script>
 // ---------- andmed ----------
 const KEY = 'kriisivaru.v1';
-const CATS = ['Vesi','Toit','Seemned ja aed','Seadmed ja kütus','Ravimid ja esmaabi','Küte ja valgus','Hügieen','Lemmikloomad','Beebi','Muu'];
+const CATS = ['Vesi','Toit','Seemned ja aed','Seadmed ja kütus','Ravimid ja esmaabi','Küte ja valgus','Hügieen','Beebi','Muu'];
 
 // key, nimi, kategooria, ühik, kcal/ühik, säilivus kuudes (kuiv, avamata), vihje, [külvinorm kg/ha, saak kg/ha]
 const PRESETS = [
@@ -99,8 +99,6 @@ const PRESETS = [
  ['diisel','Diisel','Seadmed ja kütus','l',0,12,'Kaua seistes tekivad setted/vetikad; hoia täis anumas.'],
  ['puit','Küttepuud','Seadmed ja kütus','rm',0,36,'Kuivatatud (alla 20% niiskust), katuse all.'],
  ['kasitool','Käsitööriistad (labidas, kõblas, vikat)','Seadmed ja kütus','tk',0,1200,'Elektrivabad maaharimiseks.'],
- ['lemmikutoit','Lemmiklooma toit (kuiv)','Lemmikloomad','kg',0,12,'Pane varu sama päevade arvu kohta, mis inimestel; roteeri.'],
- ['kassiliiv','Kassiliiv / lemmiklooma hügieenikotid','Lemmikloomad','pakk',0,120,''],
  ['imikusegu','Imikusegu (arsti soovitusel)','Beebi','pakk',0,12,'Valmista keedetud ja jahutatud veega; vegan-imikusegu aruta lastearstiga.'],
  ['beebitoit','Beebitoit purgis (taimne)','Beebi','purk',0,18,''],
  ['mahkmed','Mähkmed','Beebi','pakk',0,120,'Kasuta ~8 tk päevas.'],
@@ -121,13 +119,10 @@ const CHECKLIST = [
  ['Käsitsi veekaev/-pump või veefilter','Elektrivaba veeallikas.'],
  ['Puuküttega soojendus (ahi/pliit) ja küttepuud','Elektrivaba küte.'],
  ['Kanister(id) kütuse jaoks + stabilisaator','Generaatori jaoks.'],
- ['Lemmiklooma toit ja vesi','Kui on lemmikloom.','pets'],
  ['Erivajaduse toit (allergia, ravitoit)','Kui on vajadus.'],
  ['Tulekustuti ja suitsuandur','Kontrolli patarei.'],
  ['Kontaktid ja kokkusaamiskoht kokku lepitud','Paberil, mitte ainult telefonis.'],
  ['Üldkasutatavad töövahendid (kõrvits, konserviavaja, multitool)','Konserviavaja on kergesti unustatav!'],
- ['Lemmiklooma ravimid, vaktsineerimistõend, rihm/transpordikast','','pets'],
- ['Lemmiklooma nimeplaat või kiip, kontaktid ajakohased','','pets'],
  ['Beebi: imikusegu/toit, mähkmed, niisked salvrätikud','','baby'],
  ['Beebi: pudelid, steriliseerimisvahend, soe riietus ja tekk','','baby'],
  ['Beebi: palavikuvaigisti ja ravimid (lastearsti soovituse järgi)','','baby'],
@@ -184,7 +179,7 @@ const TIPS = [
  'Hoia toidu vahekorda: eelista seda, mida sa ka igapäevaselt sööd, ja roteeri varu (vana ette, uus taha).',
 ];
 
-const DEFAULTS = {people:2,days:7,kcalPerDay:2000,waterPerDay:3,land:0,genLph:1,pets:false,baby:false};
+const DEFAULTS = {people:2,days:7,kcalPerDay:2000,waterPerDay:3,land:0,genLph:1,baby:false};
 let state = load() || {settings:{},items:[],checks:{}};
 state.settings = {...DEFAULTS,...state.settings};
 let tab = 'ylevaade';
@@ -274,11 +269,10 @@ function fuelStats(){
 }
 function activeChecklist(){
   const s=state.settings;
-  return CHECKLIST.map((c,i)=>[c,i]).filter(([c])=>!c[2]||(c[2]==='pets'&&s.pets)||(c[2]==='baby'&&s.baby));
+  return CHECKLIST.map((c,i)=>[c,i]).filter(([c])=>!c[2]||(c[2]==='baby'&&s.baby));
 }
 function catVisible(c){
   const s=state.settings;
-  if(c==='Lemmikloomad')return s.pets||state.items.some(i=>i.cat===c);
   if(c==='Beebi')return s.baby||state.items.some(i=>i.cat===c);
   return true;
 }
@@ -409,9 +403,8 @@ function viewSettings(){
    <div><label>Maa-ala kasvatamiseks (m²)</label><input id="s_land" type="number" min="0" value="${s.land}"></div>
    <div><label>Generaatori kulu (l/h)</label><input id="s_gen" type="number" step="0.1" min="0.1" value="${s.genLph}"></div>
   </div>
-  <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:1rem;color:var(--ink)"><input type="checkbox" id="s_pets" style="width:auto" ${s.pets?'checked':''}> 🐾 Meil on lemmikloomi</label>
-  <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:1rem;color:var(--ink)"><input type="checkbox" id="s_baby" style="width:auto" ${s.baby?'checked':''}> 🍼 Meil on beebi / imik</label>
-  <div class="mute">Valikuga lisanduvad vastavad kontrollnimekirja punktid ja varukategooriad.</div></div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:1rem;color:var(--ink)"><input type="checkbox" id="s_baby" style="width:auto" ${s.baby?'checked':''}> 🍼 Meil on beebi / imik</label>
+  <div class="mute">Valikuga lisanduvad beebi kontrollnimekirja punktid ja varukategooria.</div></div>
   <div class="card"><h2>Varukoopia</h2>
    <button id="s_exp">⬇️ Ekspordi JSON</button>
    <button id="s_impbtn">⬆️ Impordi JSON</button>
@@ -421,8 +414,8 @@ function viewSettings(){
   const upd=()=>{state.settings={people:Math.max(1,+$('#s_people').value||1),days:Math.max(1,+$('#s_days').value||1),
     kcalPerDay:+$('#s_kcal').value||2000,waterPerDay:+$('#s_water').value||3,
     land:Math.max(0,+$('#s_land').value||0),genLph:+$('#s_gen').value||1,
-    pets:$('#s_pets').checked,baby:$('#s_baby').checked};save()};
-  ['s_people','s_days','s_kcal','s_water','s_land','s_gen','s_pets','s_baby'].forEach(id=>$('#'+id).onchange=upd);
+    baby:$('#s_baby').checked};save()};
+  ['s_people','s_days','s_kcal','s_water','s_land','s_gen','s_baby'].forEach(id=>$('#'+id).onchange=upd);
   $('#s_exp').onclick=()=>{const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,1)],{type:'application/json'}));
     a.download='kriisivaru.json';a.click()};
