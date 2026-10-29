@@ -46,9 +46,9 @@ details summary{cursor:pointer}
 <script>
 // ---------- andmed ----------
 const KEY = 'kriisivaru.v1';
-const CATS = ['Vesi','Toit','Ravimid ja esmaabi','Küte ja valgus','Hügieen','Muu'];
+const CATS = ['Vesi','Toit','Seemned ja aed','Seadmed ja kütus','Ravimid ja esmaabi','Küte ja valgus','Hügieen','Muu'];
 
-// key, nimi, kategooria, ühik, kcal/ühik, säilivus kuudes (kuiv, avamata), vihje
+// key, nimi, kategooria, ühik, kcal/ühik, säilivus kuudes (kuiv, avamata), vihje, [külvinorm kg/ha, saak kg/ha]
 const PRESETS = [
  ['vesi','Joogivesi','Vesi','l',0,12,'Pudelivesi: jahedas ja pimedas; vahetage aastas.'],
  ['riis','Riis','Toit','kg',3600,24,'Valge riis säilib aastaid kuivas; pruun ~6 kuud.'],
@@ -56,20 +56,22 @@ const PRESETS = [
  ['kaer','Kaerahelbed','Toit','kg',3700,12,'Sobib ka külmalt leotatuna (ei vaja kütet).'],
  ['jahu','Jahu','Toit','kg',3400,12,'Täisteratooted lähevad kiiremini mõranema.'],
  ['oad','Oad konservis (400 g)','Toit','purk',340,36,'Konservid: "parem enne" on sageli konservatiivne.'],
- ['tuun','Tuunikala konservis','Toit','purk',200,36,'Hoida alla 25 °C.'],
- ['liha','Lihakonserv / hautis (350 g)','Toit','purk',700,36,'Paistes või roostes purki ära kasuta.'],
+ ['kiker','Kikerherned konservis (400 g)','Toit','purk',400,36,'Paistes või roostes purki ära kasuta. Hoida alla 25 °C.'],
+ ['laatsed','Punased läätsed','Toit','kg',3400,24,'Keevad kiiresti, ei vaja leotamist: säästavad kütet.'],
+ ['soja','Sojagraanulid','Toit','kg',3300,24,'Kerge ja valgurikas; leota kuumas vees ~10 min.'],
+ ['kookospiim','Kookospiim konservis (400 ml)','Toit','purk',700,36,'Rasvane ja energiarikas.'],
+ ['parm','Pärmihelbed (toitepärm)','Toit','pakk',350,24,'Maitseaine ja B-vitamiinide allikas (osa on B12-ga rikastatud).'],
  ['tomat','Purustatud tomat (400 g)','Toit','purk',100,24,'Pärast avamist 2-3 päeva külmas.'],
  ['pahklivoi','Pähklivõi (350 g)','Toit','purk',2000,12,'Kõrge energiasisaldus, ei vaja kütet.'],
  ['pahklid','Pähklid','Toit','kg',6000,9,'Rasv läheb kuumuses mõruks.'],
  ['puuvili','Kuivatatud puuviljad','Toit','kg',2800,12,''],
  ['sokolaad','Šokolaad','Toit','kg',5300,12,''],
  ['naki','Näkileib / kuivikud','Toit','kg',3800,12,'Hoida kuivas.'],
- ['mesi','Mesi','Toit','kg',3000,120,'Praktiliselt ei rikne. Kristalliseerumine pole viga.'],
+ ['siirup','Vahtra- või agaavisiirup','Toit','kg',2600,36,'Avatud pudel külmkappi, kui võimalik.'],
  ['suhkur','Suhkur','Toit','kg',3870,120,''],
  ['sool','Sool','Toit','kg',0,120,''],
  ['oli','Taimeõli','Toit','l',8000,18,'Pimedas ja jahedas.'],
- ['piimapulber','Piimapulber','Toit','kg',5000,12,'Avatud pakend kuivas ja suletuna.'],
- ['piim','Pikaealine piim (UHT)','Toit','l',650,9,'Avamata toatemperatuuril; avatud 2-3 päeva.'],
+ ['taimepiim','Taimepiim (UHT, kaer/soja)','Toit','l',450,9,'Avamata toatemperatuuril; avatud 2-3 päeva.'],
  ['kartul','Kartul','Toit','kg',770,3,'Jahedas ja pimedas; rohelist/idanenut mitte.'],
  ['sibul','Sibul','Toit','kg',400,3,'Kuivas ja õhustatud kohas.'],
  ['porgand','Porgand','Toit','kg',410,1,'Jahedas; liivas kauem.'],
@@ -84,6 +86,19 @@ const PRESETS = [
  ['vesipuhastus','Veepuhastustabletid','Vesi','pakk',0,48,''],
  ['hygieen','Märgpuhastuslapid','Hügieen','pakk',0,36,''],
  ['prygikott','Prügikotid','Hügieen','pakk',0,120,'Kasulik ka ajutise tualetina.'],
+ ['nisu','Nisu (terad)','Toit','kg',3300,60,'Kuivas, jahedas ja näriliskindlas anumas. Söögi- ja külviosa hoia eraldi; idanevus langeb aastatega.',200,4000],
+ ['kaeraterad','Kaer (terad)','Toit','kg',3850,48,'Terad sobivad nii külviks kui helbeveskisse.',180,3000],
+ ['tatar','Tatar (terad)','Toit','kg',3430,36,'Röstitud tatar ei idane: külviks osta röstimata tera.',70,1200],
+ ['rukis','Rukis (terad)','Toit','kg',3300,48,'Hea külmakindel kultuur.',180,3500],
+ ['koogiseeme','Köögiviljaseemned (külvamiseks)','Seemned ja aed','pakk',0,36,'Kuiv, pime ja jahe. Idanevus 2-5 a olenevalt liigist; tee idanevustest.'],
+ ['kartuliseeme','Seemnekartul','Seemned ja aed','kg',0,6,'Hoia pimedas ja 2-5 °C juures.'],
+ ['jahuveski','Käsijahuveski','Seadmed ja kütus','tk',0,1200,'Elektrivaba: terad jahuks. Hoia kuivas.'],
+ ['helbeveski','Kaerahelbeveski (käsi)','Seadmed ja kütus','tk',0,1200,'Elektrivaba: terad helvesteks.'],
+ ['generaator','Generaator','Seadmed ja kütus','tk',0,600,'Kasuta ainult õues. Käivita aeg-ajalt proovimiseks.'],
+ ['bensiin','Bensiin','Seadmed ja kütus','l',0,12,'Heakskiidetud kanistris, jahedas. Stabilisaatoriga kuni 2 a.'],
+ ['diisel','Diisel','Seadmed ja kütus','l',0,12,'Kaua seistes tekivad setted/vetikad; hoia täis anumas.'],
+ ['puit','Küttepuud','Seadmed ja kütus','rm',0,36,'Kuivatatud (alla 20% niiskust), katuse all.'],
+ ['kasitool','Käsitööriistad (labidas, kõblas, vikat)','Seadmed ja kütus','tk',0,1200,'Elektrivabad maaharimiseks.'],
 ];
 const byKey = Object.fromEntries(PRESETS.map(p=>[p[0],p]));
 
@@ -96,6 +111,10 @@ const CHECKLIST = [
  ['Sularaha väikestes rahatähtedes','Kaardimaksed võivad katkeda.'],
  ['Dokumentide koopiad (paberil ja USB-l)',''],
  ['Soe riietus ja magamiskott/tekid',''],
+ ['Vitamiin B12 toidulisand','Vegani jaoks oluline, eriti pika kriisi korral.'],
+ ['Käsitsi veekaev/-pump või veefilter','Elektrivaba veeallikas.'],
+ ['Puuküttega soojendus (ahi/pliit) ja küttepuud','Elektrivaba küte.'],
+ ['Kanister(id) kütuse jaoks + stabilisaator','Generaatori jaoks.'],
  ['Lemmiklooma toit ja vesi','Kui on lemmikloom.'],
  ['Beebi- või erivajaduse toit','Kui on vajadus.'],
  ['Tulekustuti ja suitsuandur','Kontrolli patarei.'],
@@ -104,43 +123,59 @@ const CHECKLIST = [
 ];
 
 const RECIPES = [
- {n:'Riisi-ube pott',need:['riis','oad'],opt:['sibul','sool','tomat','oli'],fuel:true,
+ {n:'Riisi-ube pott',need:['riis','oad'],opt:['sibul','sool','tomat','oli','parm'],fuel:true,
   s:'Keeda riisi (1:2 veega) 15 min. Lisa kurnatud oad, soola ja soovi korral tomatit/sibulat. Soojenda läbi.'},
- {n:'Kaerapuder',need:['kaer'],opt:['piimapulber','mesi','suhkur','puuvili','pahklivoi'],fuel:true,
-  s:'1 osa helbeid : 2 osa vett või lahjat piimapulbrit, keeda 5 min. Magusta meega, lisa puuvilju.'},
- {n:'Külm leotatud kaer (kütteta)',need:['kaer'],opt:['piimapulber','puuvili','pahklivoi','mesi','pahklid'],fuel:false,
-  s:'Leota helbeid ~2 h võrdses koguses vees või piimapulbri lahuses. Lisa pähklivõi/puuvili/mesi.'},
- {n:'Tuuni-pasta',need:['makaron','tuun'],opt:['tomat','sibul','oli','sool'],fuel:true,
-  s:'Keeda pasta soolases vees (vett saab kasutada kordusena), sega kurnatud tuun ja tomat. Nii kulub vähe vett.'},
- {n:'Pannileib',need:['jahu'],opt:['oli','sool','piimapulber'],fuel:true,
+ {n:'Kaerapuder',need:['kaer'],opt:['taimepiim','siirup','suhkur','puuvili','pahklivoi'],fuel:true,
+  s:'1 osa helbeid : 2 osa vett või taimepiima, keeda 5 min. Magusta siirupiga, lisa puuvilju.'},
+ {n:'Külm leotatud kaer (kütteta)',need:['kaer'],opt:['taimepiim','puuvili','pahklivoi','siirup','pahklid'],fuel:false,
+  s:'Leota helbeid ~2 h võrdses koguses vees või taimepiimas. Lisa pähklivõi/puuvili/siirup.'},
+ {n:'Kikerherne-tomati pasta',need:['makaron','kiker'],opt:['tomat','sibul','oli','sool','parm'],fuel:true,
+  s:'Keeda pasta soolases vees, sega kurnatud kikerherned ja tomat. Kikerhernevedelikku (aquafaba) saab kasutada hautise paksendamiseks.'},
+ {n:'Punaste läätsede supp',need:['laatsed'],opt:['kartul','sibul','porgand','tomat','oli','sool','parm'],fuel:true,
+  s:'Läätsed + vesi (1:3), keeda ~15 min pehmeks. Lisa soovi korral tomatit, sibulat, kartulit ja soola.'},
+ {n:'Kookos-kikerhernekarri',need:['kiker','kookospiim'],opt:['riis','sibul','tomat','sool'],fuel:true,
+  s:'Soojenda kookospiim kikerhernestega, lisa praetud sibul ja tomat. Serveeri riisiga.'},
+ {n:'Tatrapuder',need:['tatar'],opt:['oli','sool','sibul','parm'],fuel:true,
+  s:'Loputa tatar, keeda vees 1:2 ~15 min. Sibul + õli teevad soolase, siirup magusa.'},
+ {n:'Keedetud nisu',need:['nisu'],opt:['siirup','puuvili','pahklid','sool'],fuel:true,
+  s:'Leota nisuterad üleöö, keeda ~45 min pehmeks. Sobib puderina või salatis.'},
+ {n:'Käsiveskil jahvatatud nisu pannileib',need:['nisu','jahuveski'],opt:['oli','sool'],fuel:true,
+  s:'Jahvata terad käsiveskil, sega vee ja soolaga, küpseta kuival pannil.'},
+ {n:'Kaerahelbed käsiveskil',need:['kaeraterad','helbeveski'],opt:['taimepiim','siirup','puuvili'],fuel:true,
+  s:'Veska terad helvesteks ja keeda puderina (1:2 vett).'},
+ {n:'Pannileib',need:['jahu'],opt:['oli','sool'],fuel:true,
   s:'Jahu + vesi + näpuotsatäis soola, sõtku taigen, vormi lamedad kakud ja küpseta kuival pannil mõlemalt poolt.'},
- {n:'Vee-jahu pannkoogid',need:['jahu'],opt:['piimapulber','oli','suhkur','mesi'],fuel:true,
-  s:'Jahu + vesi/piimapulbri lahus + natuke õli. Prae kuival või õlitatud pannil. Pealt mesi/suhkur.'},
- {n:'Liha-kartuli hautis',need:['liha','kartul'],opt:['sibul','porgand','sool'],fuel:true,
-  s:'Kuubikuta kartul, sibul ja porgand, keeda pehmeks. Lisa lihakonserv lõpus ja soojenda läbi.'},
- {n:'Kartuli-sibula supp',need:['kartul','sibul'],opt:['porgand','oli','sool','piimapulber'],fuel:true,
-  s:'Prae sibul õlis, lisa kuubikuteks kartul ja vesi, keeda pehmeks. Soovi korral püreesta ja lisa piimapulbrit.'},
- {n:'Riisipuding',need:['riis','piimapulber'],opt:['suhkur','mesi','puuvili'],fuel:true,
-  s:'Riis veega pehmeks, lisa lahustatud piimapulber ja magustaja, keeda kuni paks.'},
- {n:'Näkileib pähklivõi ja meega (kütteta)',need:['naki','pahklivoi'],opt:['mesi','puuvili'],fuel:false,
-  s:'Määri pähklivõi näkile, lisa mesi või kuivatatud puuviljad. Kiire ja kütteta.'},
- {n:'Ubade-tomati hautis',need:['oad','tomat'],opt:['sibul','makaron','riis','oli','sool'],fuel:true,
+ {n:'Vee-jahu pannkoogid',need:['jahu'],opt:['taimepiim','oli','suhkur','siirup'],fuel:true,
+  s:'Jahu + vesi/taimepiim + natuke õli. Prae kuival või õlitatud pannil. Pealt siirup/suhkur.'},
+ {n:'Soja-kartuli hautis',need:['soja','kartul'],opt:['sibul','porgand','tomat','sool'],fuel:true,
+  s:'Leota sojagraanulid kuumas vees. Keeda kuubikuteks kartul, sibul ja porgand pehmeks, lisa sojagraanulid ja soola.'},
+ {n:'Kartuli-sibula supp',need:['kartul','sibul'],opt:['porgand','oli','sool','taimepiim'],fuel:true,
+  s:'Prae sibul õlis, lisa kuubikuteks kartul ja vesi, keeda pehmeks. Soovi korral püreesta ja lisa taimepiima.'},
+ {n:'Riisipuding',need:['riis','taimepiim'],opt:['suhkur','siirup','puuvili'],fuel:true,
+  s:'Keeda riis taimepiimaga pehmeks ja pakseks, magusta.'},
+ {n:'Näkileib pähklivõi ja siirupiga (kütteta)',need:['naki','pahklivoi'],opt:['siirup','puuvili'],fuel:false,
+  s:'Määri pähklivõi näkile, lisa siirup või kuivatatud puuviljad. Kiire ja kütteta.'},
+ {n:'Ubade-tomati hautis',need:['oad','tomat'],opt:['sibul','makaron','riis','oli','sool','parm'],fuel:true,
   s:'Soojenda oad tomatiga, lisa praetud sibul. Serveeri riisi, pasta või näkileivaga.'},
- {n:'Energiapallid (kütteta)',need:['pahklivoi','puuvili'],opt:['kaer','mesi','sokolaad','pahklid'],fuel:false,
-  s:'Sega pähklivõi, hakitud kuivatatud puuviljad, kaerahelbed ja mesi; vormi pallid.'},
+ {n:'Energiapallid (kütteta)',need:['pahklivoi','puuvili'],opt:['kaer','siirup','sokolaad','pahklid'],fuel:false,
+  s:'Sega pähklivõi, hakitud kuivatatud puuviljad, kaerahelbed ja siirup; vormi pallid. (Šokolaad: vali vegan, tume.)'},
 ];
 
 const TIPS = [
  'Sulatatud ja uuesti külmutatud toit: kui toit on püsinud alla 4 °C, on see üldiselt ohutu. Kui on olnud üle 4 °C üle 2 h, viska riknev toit ära.',
  'Suletud külmkapp hoiab külma ~4 h, täis sügavkülmik ~48 h (pooltäis ~24 h). Ära ava asjata.',
  'Järjekord elektrikatkestusel: 1) külmkapi riknev, 2) sügavkülmik, 3) pikasäilivad varud.',
- '"Parem enne" on kvaliteedi, mitte ohutuse tähtaeg. "Kõlblik kuni" on ohutuse tähtaeg (liha, kala, piimatooted) – seda ületada ei tohi.',
+ '"Parem enne" on kvaliteedi, mitte ohutuse tähtaeg. "Kõlblik kuni" on ohutuse tähtaeg (nt tofu, värske taimejogurt, valmistoit) – seda ületada ei tohi.',
  'Konserv: paistes, lekkiv või tugevalt mõlkis purk minema; tavaline kuupäev ületatud purk on sageli kaua söödav.',
  'Vett arvesta 3 l inimese kohta päevas (joomine + toidu valmistamine). Täitke vann/ämbrid vahetult kriisi alguses.',
+ 'Vegani kriisivaru: arvesta valku (oad, läätsed, soja), rasva (pähklid, õli) ja B12 (toidulisand või rikastatud toit). Kontrolli ka šokolaadi ja kuivikute koostist.',
+ 'Seemned: hoia söögi- ja külviosa eraldi (märgi Varud-vaates "külviks reserveeritud"). Külvi proovipartii idanevuse kontrolliks: 10 seemet niiskel paberil, 5-10 päeva.',
  'Hoia toidu vahekorda: eelista seda, mida sa ka igapäevaselt sööd, ja roteeri varu (vana ette, uus taha).',
 ];
 
-let state = load() || {settings:{people:2,days:7,kcalPerDay:2000,waterPerDay:3},items:[],checks:{}};
+const DEFAULTS = {people:2,days:7,kcalPerDay:2000,waterPerDay:3,land:0,genLph:1};
+let state = load() || {settings:{},items:[],checks:{}};
+state.settings = {...DEFAULTS,...state.settings};
 let tab = 'ylevaade';
 
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
@@ -158,7 +193,7 @@ function totals(){
   for(const it of state.items){
     if(daysTo(it.expiry)!==null && daysTo(it.expiry)<0) continue; // aegunut ei arvesta
     if(it.cat==='Vesi' && it.unit==='l' && it.key!=='vesipuhastus') water+=+it.qty||0;
-    if(it.cat==='Toit') kcal+=(+it.qty||0)*(+it.kcal||0);
+    if(it.cat==='Toit') kcal+=Math.max(0,(+it.qty||0)-(+it.reserve||0))*(+it.kcal||0);
   }
   const s=state.settings;
   return {water,kcal,
@@ -168,7 +203,8 @@ function totals(){
 function fmt(n){return (Math.round(n*10)/10).toLocaleString('et')}
 function matchKey(name){
   const n=name.trim().toLowerCase();
-  const p=PRESETS.find(p=>p[1].toLowerCase()===n) || PRESETS.find(p=>n && (p[1].toLowerCase().includes(n)||n.includes(p[1].toLowerCase().split(' ')[0])));
+  const base=x=>x.toLowerCase().replace(/\s*\(.*\)\s*$/,'');
+  const p=PRESETS.find(p=>p[1].toLowerCase()===n) || PRESETS.find(p=>base(p[1])===n) || PRESETS.find(p=>n && p[1].toLowerCase().startsWith(n)) || PRESETS.find(p=>n && (p[1].toLowerCase().includes(n)||n.includes(p[1].toLowerCase().split(' ')[0])));
   return p?p[0]:'';
 }
 function haveKeys(){
@@ -194,6 +230,28 @@ function meter(days,target){
   return `<div class="meter"><i class="${cls}" style="width:${pct}%"></i></div>`;
 }
 
+function landStats(){
+  const s=state.settings,out=[];
+  for(const it of state.items){
+    const p=byKey[it.key];if(!p||!p[7])continue;
+    const d=daysTo(it.expiry);if(d!==null&&d<0)continue;
+    const res=+it.reserve||0;if(res<=0)continue;
+    const coverM2=res/p[7]*10000;
+    const sownM2=s.land>0?Math.min(s.land,coverM2):coverM2;
+    const harvest=sownM2/10000*p[8];
+    out.push({name:it.name,res,coverM2,sownM2,harvest,days:harvest*p[4]/(s.people*s.kcalPerDay)});
+  }
+  return out;
+}
+function fuelStats(){
+  let l=0;
+  for(const it of state.items){
+    if(it.key!=='bensiin'&&it.key!=='diisel')continue;
+    const d=daysTo(it.expiry);if(d!==null&&d<0)continue;
+    l+=+it.qty||0;
+  }
+  return {l,hours:l/(state.settings.genLph||1)};
+}
 function viewOverview(){
   const s=state.settings,t=totals();
   const shortWater=Math.max(0,s.days*s.people*s.waterPerDay-t.water);
@@ -214,6 +272,14 @@ function viewOverview(){
      return `<div class="row"><span>${esc(i.name)} <span class="mute">${fmt(i.qty)} ${esc(i.unit)}</span></span>
      <span class="${d<0?'bad':d<30?'warn':'mute'}">${d<0?`aegunud ${-d} p`:`${d} p`}</span></div>`}).join('')
      :'<div class="mute">Lisa varudele aegumiskuupäevad.</div>'}</div>
+  ${(()=>{const L=landStats(),F=fuelStats(),hasGen=state.items.some(i=>i.key==='generaator');
+   return (L.length||s.land>0?`<div class="card"><h2>🌱 Maa ja külv${s.land>0?` (${s.land.toLocaleString('et')} m²)`:''}</h2>${
+     L.length?L.map(x=>`<div class="row"><span>${esc(x.name)}<br><span class="mute">külviks ${fmt(x.res)} kg → katab ${Math.round(x.coverM2).toLocaleString('et')} m²</span></span>
+       <span style="text-align:right">saak ~${Math.round(x.harvest).toLocaleString('et')} kg<br><span class="mute">≈ ${fmt(x.days)} p toitu</span></span></div>`).join('')
+     :'<div class="mute">Sisesta teraviljale "külviks reserveeritud" kogus (Varud).</div>'}
+     <div class="mute" style="margin-top:6px">Saak on suunav keskmine; tegelik sõltub mullast ja ilmast.${s.land>0?'':' Sisesta maa-ala Seadetes.'}</div></div>`:'')+
+   (F.l>0||hasGen?`<div class="card"><h2>⛽ Generaator ja kütus</h2><div class="row"><span>Kütust (aegumata)</span><span>${fmt(F.l)} l ≈ ${fmt(F.hours)} h tööd</span></div>
+     <div class="mute">Eeldus ${s.genLph} l/h (muuda Seadetes). Kasuta ainult õues.</div></div>`:'')})()}
   <div class="card"><h2>Mõtteid</h2><div class="mute">Vee ja toidu arvutus ignoreerib aegunud tooteid. Kalorid on hinnangulised (vt <b>Varud</b>).</div></div>`;
 }
 
@@ -224,7 +290,7 @@ function viewItems(){
     if(!its.length)return '';
     return `<div class="card"><h2>${c}</h2>${its.map(i=>{
       const d=daysTo(i.expiry);
-      return `<div class="row"><span>${esc(i.name)}<br><span class="mute">${fmt(i.qty)} ${esc(i.unit)}${i.loc?' · '+esc(i.loc):''}</span></span>
+      return `<div class="row"><span>${esc(i.name)}<br><span class="mute">${fmt(i.qty)} ${esc(i.unit)}${i.reserve?` (külviks ${fmt(i.reserve)})`:''}${i.loc?' · '+esc(i.loc):''}</span></span>
       <span style="text-align:right"><span class="${d===null?'mute':d<0?'bad':d<30?'warn':'mute'}">${d===null?'–':d<0?`aegunud ${-d} p`:`${i.expiry}`}</span><br>
       <button class="small" data-edit="${i.id}">muuda</button> <button class="small" data-del="${i.id}">×</button></span></div>`}).join('')}</div>`}).join('');
   $('#main').innerHTML=`
@@ -238,6 +304,7 @@ function viewItems(){
     <div><label>Aegub</label><input id="f_exp" type="date" value="${f.expiry||''}"></div>
     <div><label>kcal / ühik (toit)</label><input id="f_kcal" type="number" step="any" min="0" value="${f.kcal??''}"></div>
     <div><label>Asukoht</label><input id="f_loc" value="${esc(f.loc||'')}"></div>
+    <div><label>Külviks reserveeritud (kogusega samas ühikus)</label><input id="f_res" type="number" step="any" min="0" value="${f.reserve||''}"></div>
    </div>
    <div class="mute" id="f_hint" style="margin-top:6px"></div>
    <div style="margin-top:8px"><button class="primary" id="f_save">${f.id?'Salvesta':'Lisa'}</button> ${f.id?'<button id="f_cancel">Tühista</button>':''}</div></div>
@@ -252,7 +319,7 @@ function viewItems(){
   $('#f_save').onclick=()=>{
     const name=$('#f_name').value.trim();if(!name)return;
     const it={id:f.id||uid(),name,key:matchKey(name),cat:$('#f_cat').value,qty:+$('#f_qty').value||0,
-      unit:$('#f_unit').value.trim(),expiry:$('#f_exp').value,kcal:+$('#f_kcal').value||0,loc:$('#f_loc').value.trim()};
+      unit:$('#f_unit').value.trim(),expiry:$('#f_exp').value,kcal:+$('#f_kcal').value||0,loc:$('#f_loc').value.trim(),reserve:+$('#f_res').value||0};
     const idx=state.items.findIndex(x=>x.id===it.id);
     if(idx>=0)state.items[idx]=it;else state.items.push(it);
     state.editing=null;save();render();
@@ -309,6 +376,8 @@ function viewSettings(){
    <div><label>Päevi (eesmärk)</label><input id="s_days" type="number" min="1" value="${s.days}"></div>
    <div><label>kcal / inimene / päev</label><input id="s_kcal" type="number" value="${s.kcalPerDay}"></div>
    <div><label>vett l / inimene / päev</label><input id="s_water" type="number" step="0.5" value="${s.waterPerDay}"></div>
+   <div><label>Maa-ala kasvatamiseks (m²)</label><input id="s_land" type="number" min="0" value="${s.land}"></div>
+   <div><label>Generaatori kulu (l/h)</label><input id="s_gen" type="number" step="0.1" min="0.1" value="${s.genLph}"></div>
   </div></div>
   <div class="card"><h2>Varukoopia</h2>
    <button id="s_exp">⬇️ Ekspordi JSON</button>
@@ -317,8 +386,9 @@ function viewSettings(){
    <div id="s_msg" class="mute" style="margin-top:8px"></div>
    <p class="mute">Andmed on salvestatud vaid selle brauseri kohalikku mällu. Tee aeg-ajalt eksport.</p></div>`;
   const upd=()=>{state.settings={people:Math.max(1,+$('#s_people').value||1),days:Math.max(1,+$('#s_days').value||1),
-    kcalPerDay:+$('#s_kcal').value||2000,waterPerDay:+$('#s_water').value||3};save()};
-  ['s_people','s_days','s_kcal','s_water'].forEach(id=>$('#'+id).onchange=upd);
+    kcalPerDay:+$('#s_kcal').value||2000,waterPerDay:+$('#s_water').value||3,
+    land:Math.max(0,+$('#s_land').value||0),genLph:+$('#s_gen').value||1};save()};
+  ['s_people','s_days','s_kcal','s_water','s_land','s_gen'].forEach(id=>$('#'+id).onchange=upd);
   $('#s_exp').onclick=()=>{const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,1)],{type:'application/json'}));
     a.download='kriisivaru.json';a.click()};
@@ -331,7 +401,7 @@ function viewSettings(){
         const d=JSON.parse(r.result);
         if(!Array.isArray(d.items)||!d.settings)throw 0;
         const replace=!state.items.length||confirm(`Fail sisaldab ${d.items.length} toodet.\nOK = asenda praegused andmed\nTühista = lisa olemasolevatele`);
-        if(replace){state={settings:d.settings,items:d.items,checks:d.checks||{}}}
+        if(replace){state={settings:{...DEFAULTS,...d.settings},items:d.items,checks:d.checks||{}}}
         else{const ids=new Set(state.items.map(i=>i.id));d.items.forEach(i=>{if(!ids.has(i.id))state.items.push(i)})}
         save();render();tab='seaded';render();
         $('#s_msg').textContent=`Imporditud: ${d.items.length} toodet.`;
